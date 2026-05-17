@@ -1,0 +1,636 @@
+html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, shrink-to-fit=no">
+  <title>灵犀计算器 | 在线数值计算</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1e2b3c 0%, #0f1a26 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 48px;
+      padding: 28px 24px 32px;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      transition: all 0.2s ease;
+    }
+
+    .display-section {
+      background: rgba(10, 20, 30, 0.65);
+      border-radius: 32px;
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .expression-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 2.4rem;
+      font-weight: 500;
+      color: #ffffff;
+      text-align: right;
+      letter-spacing: 1px;
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      padding: 8px 4px;
+      caret-color: #ffb74d;
+      line-height: 1.2;
+    }
+
+    .expression-input::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+      font-weight: 400;
+    }
+
+    .result-preview {
+      font-size: 1.5rem;
+      color: #b0c7e0;
+      text-align: right;
+      min-height: 32px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      word-break: break-word;
+      font-family: 'Fira Code', monospace;
+      opacity: 0.9;
+    }
+
+    .history-badge {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .history-label {
+      font-size: 0.8rem;
+      color: #8a9aa8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .clear-history-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #ccddee;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .clear-history-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .calc-btn {
+      aspect-ratio: 1 / 1;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      font-size: 1.7rem;
+      font-weight: 500;
+      color: #edf4ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .calc-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+
+    /* 功能按钮特殊颜色 */
+    .btn-operator {
+      background: rgba(255, 183, 77, 0.18);
+      border-color: rgba(255, 183, 77, 0.3);
+      color: #ffb74d;
+      font-weight: 600;
+    }
+
+    .btn-equals {
+      background: #ffb74d;
+      border: none;
+      color: #0a121f;
+      font-weight: 700;
+      box-shadow: 0 10px 18px rgba(255, 160, 0, 0.35);
+      border: 1px solid rgba(255, 200, 100, 0.6);
+    }
+
+    .btn-equals:active {
+      background: #ffa726;
+      transform: scale(0.94);
+    }
+
+    .btn-clear {
+      background: rgba(255, 95, 95, 0.25);
+      border-color: rgba(255, 120, 120, 0.4);
+      color: #ff8a8a;
+      font-weight: 600;
+    }
+
+    .btn-backspace {
+      color: #b0c7e0;
+      font-size: 1.8rem;
+    }
+
+    .history-panel {
+      background: rgba(20, 30, 40, 0.7);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 24px;
+      padding: 14px 16px;
+      max-height: 130px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ccddee;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 14px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .history-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .history-expression {
+      font-weight: 500;
+      color: #e0e8f5;
+    }
+
+    .history-result {
+      font-weight: 600;
+      color: #ffb74d;
+      margin-left: 12px;
+    }
+
+    .empty-history {
+      text-align: center;
+      color: #6a7a8b;
+      font-size: 0.9rem;
+      padding: 10px;
+    }
+
+    @media (max-width: 400px) {
+      .calculator {
+        padding: 20px 16px 24px;
+      }
+      .buttons-grid {
+        gap: 10px;
+      }
+      .calc-btn {
+        font-size: 1.5rem;
+        border-radius: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <!-- 显示区域 -->
+    <div class="display-section">
+      <input type="text" id="expressionInput" class="expression-input" placeholder="0" autofocus inputmode="none" readonly>
+      <div class="result-preview" id="liveResult"></div>
+      <div class="history-badge">
+        <span class="history-label">📋 历史记录</span>
+        <button class="clear-history-btn" id="clearHistoryBtn">清除</button>
+      </div>
+    </div>
+
+    <!-- 历史记录面板 -->
+    <div class="history-panel" id="historyContainer">
+      <div class="empty-history">暂无历史记录</div>
+    </div>
+
+    <!-- 按钮网格 -->
+    <div class="buttons-grid">
+      <!-- 第一行 -->
+      <button class="calc-btn btn-clear" id="btnClear">C</button>
+      <button class="calc-btn btn-backspace" id="btnBackspace">⌫</button>
+      <button class="calc-btn btn-operator" id="btnPercent">%</button>
+      <button class="calc-btn btn-operator" id="btnDivide">÷</button>
+
+      <!-- 第二行 -->
+      <button class="calc-btn" id="btn7">7</button>
+      <button class="calc-btn" id="btn8">8</button>
+      <button class="calc-btn" id="btn9">9</button>
+      <button class="calc-btn btn-operator" id="btnMultiply">×</button>
+
+      <!-- 第三行 -->
+      <button class="calc-btn" id="btn4">4</button>
+      <button class="calc-btn" id="btn5">5</button>
+      <button class="calc-btn" id="btn6">6</button>
+      <button class="calc-btn btn-operator" id="btnSubtract">−</button>
+
+      <!-- 第四行 -->
+      <button class="calc-btn" id="btn1">1</button>
+      <button class="calc-btn" id="btn2">2</button>
+      <button class="calc-btn" id="btn3">3</button>
+      <button class="calc-btn btn-operator" id="btnAdd">+</button>
+
+      <!-- 第五行 -->
+      <button class="calc-btn" id="btn0">0</button>
+      <button class="calc-btn" id="btnDot">.</button>
+      <button class="calc-btn" id="btnLeftParen">(</button>
+      <button class="calc-btn" id="btnRightParen">)</button>
+
+      <!-- 第六行：等号占据两个位置，但保持网格对齐，使用等号按钮跨列？用grid实现更好：修改最后一行布局 -->
+      <!-- 我们单独处理最后一行，让等号更大？为了美观保持统一网格，使用等号按钮放在右下位置，增加一个删除按钮或直接扩展 -->
+    </div>
+    <!-- 额外一行专门放等号，使其更突出 -->
+    <div style="display: flex; margin-top: 4px;">
+      <button class="calc-btn btn-equals" id="btnEquals" style="flex: 1; aspect-ratio: auto; height: 70px; border-radius: 32px; font-size: 2rem;">=</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // DOM 元素
+      const expressionInput = document.getElementById('expressionInput');
+      const liveResultDiv = document.getElementById('liveResult');
+      const historyContainer = document.getElementById('historyContainer');
+      const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+      // 状态变量
+      let currentExpression = '';        // 当前显示的算式字符串
+      let history = [];                // 存储历史记录 { expression, result }
+      const MAX_HISTORY = 10;          // 最多保存条数
+
+      // ---------- 工具函数：安全计算表达式 ----------
+      function safeEvaluate(expr) {
+        if (!expr || expr.trim() === '') {
+          return { success: false, result: null };
+        }
+        
+        // 预处理：替换显示符号为JavaScript可识别符号
+        let processed = expr
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/−/g, '-')   // 处理可能出现的减号变体
+          .replace(/%/g, '/100'); // 百分比转换为除以100，但注意%在表达式中位置：例如 50% 变为 50/100，但可能需结合上下文。
+          // 更严谨处理%：将数字后紧跟%转换为 (数字/100) ，但简单替换可能引起问题。这里采用替换策略：匹配数字+%
+          // 使用正则：(\d+\.?\d*)% 替换为 ($1/100)
+          processed = processed.replace(/(\d+\.?\d*)%/g, '($1/100)');
+          
+        // 安全检查：只允许数字、运算符、小数点、括号、空格
+        const sanitized = processed.replace(/\s/g, '');
+        if (!/^[0-9+\-*/().]+$/.test(sanitized)) {
+          return { success: false, result: null };
+        }
+        
+        // 防止空括号或连续运算符等，使用try-catch捕获eval错误
+        try {
+          // 使用Function构造函数替代eval，稍微安全一点，但仍需谨慎
+          const compute = new Function(`return (${sanitized})`);
+          const result = compute();
+          
+          // 检查结果是否为有效数字
+          if (typeof result !== 'number' || !isFinite(result)) {
+            return { success: false, result: null };
+          }
+          
+          // 格式化结果：避免浮点数精度问题，保留合理小数位
+          let formattedResult;
+          if (Number.isInteger(result)) {
+            formattedResult = result.toString();
+          } else {
+            // 限制小数位数，例如最多10位，去除尾部零
+            formattedResult = parseFloat(result.toPrecision(12)).toString();
+          }
+          
+          return { success: true, result: formattedResult };
+        } catch (e) {
+          return { success: false, result: null };
+        }
+      }
+
+      // 更新实时预览
+      function updateLivePreview() {
+        const expr = currentExpression;
+        if (!expr.trim()) {
+          liveResultDiv.textContent = '';
+          return;
+        }
+        
+        const { success, result } = safeEvaluate(expr);
+        if (success && result !== null) {
+          liveResultDiv.textContent = `= ${result}`;
+        } else {
+          liveResultDiv.textContent = '';
+        }
+      }
+
+      // 更新输入框显示
+      function updateDisplay() {
+        expressionInput.value = currentExpression || '';
+        updateLivePreview();
+      }
+
+      // 添加字符到表达式
+      function appendToExpression(char) {
+        // 简单限制：避免连续运算符等基本规则（但允许灵活输入，由计算时验证）
+        currentExpression += char;
+        updateDisplay();
+      }
+
+      // 执行计算并添加到历史
+      function performEquals() {
+        const expr = currentExpression.trim();
+        if (!expr) {
+          return;
+        }
+        
+        const { success, result } = safeEvaluate(expr);
+        if (success && result !== null) {
+          // 添加历史记录（去重相邻相同表达式？保留）
+          addHistoryItem(expr, result);
+          // 将当前表达式设置为结果，方便继续运算
+          currentExpression = result;
+          updateDisplay();
+          // 可选：滚动历史到底部
+          scrollHistoryToBottom();
+        } else {
+          // 无效表达式时给出视觉反馈：短暂闪烁输入框
+          expressionInput.style.transition = '0.1s';
+          expressionInput.style.backgroundColor = 'rgba(255, 80, 80, 0.25)';
+          setTimeout(() => {
+            expressionInput.style.backgroundColor = 'transparent';
+          }, 150);
+          // 不清空表达式，让用户修改
+        }
+      }
+
+      // 清除当前输入
+      function clearExpression() {
+        currentExpression = '';
+        updateDisplay();
+        expressionInput.style.backgroundColor = 'transparent';
+      }
+
+      // 删除最后一个字符
+      function backspace() {
+        if (currentExpression.length > 0) {
+          currentExpression = currentExpression.slice(0, -1);
+          updateDisplay();
+        }
+      }
+
+      // ---------- 历史记录管理 ----------
+      function loadHistory() {
+        try {
+          const stored = localStorage.getItem('calculator_history');
+          if (stored) {
+            history = JSON.parse(stored);
+            // 确保是数组且过滤无效项
+            if (!Array.isArray(history)) history = [];
+            history = history.filter(item => item && typeof item.expression === 'string' && typeof item.result === 'string');
+            // 限制数量
+            if (history.length > MAX_HISTORY) {
+              history = history.slice(-MAX_HISTORY);
+            }
+          } else {
+            history = [];
+          }
+        } catch (e) {
+          history = [];
+        }
+        renderHistory();
+      }
+
+      function saveHistory() {
+        localStorage.setItem('calculator_history', JSON.stringify(history));
+      }
+
+      function addHistoryItem(expression, result) {
+        // 避免重复连续相同记录
+        if (history.length > 0) {
+          const last = history[history.length - 1];
+          if (last.expression === expression && last.result === result) {
+            return; // 不重复添加
+          }
+        }
+        
+        history.push({ expression, result });
+        if (history.length > MAX_HISTORY) {
+          history.shift();
+        }
+        saveHistory();
+        renderHistory();
+      }
+
+      function clearHistory() {
+        history = [];
+        saveHistory();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        historyContainer.innerHTML = '';
+        if (!history.length) {
+          historyContainer.innerHTML = '<div class="empty-history">✨ 暂无历史记录</div>';
+          return;
+        }
+        
+        // 倒序显示最新的在底部？通常历史面板从上到下为旧到新，或新到旧。这里采用新在上方更符合习惯。
+        const reversed = [...history].reverse();
+        reversed.forEach(item => {
+          const historyItem = document.createElement('div');
+          historyItem.className = 'history-item';
+          historyItem.innerHTML = `<span class="history-expression">${escapeHTML(item.expression)}</span><span class="history-result">= ${escapeHTML(item.result)}</span>`;
+          
+          // 点击历史项：将表达式填入输入框
+          historyItem.addEventListener('click', () => {
+            currentExpression = item.expression;
+            updateDisplay();
+            // 可选：自动计算？不自动计算，让用户修改或按等号
+          });
+          
+          historyContainer.appendChild(historyItem);
+        });
+      }
+
+      function scrollHistoryToBottom() {
+        if (historyContainer) {
+          historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+      }
+
+      // 简单转义防止XSS
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // ---------- 事件绑定 ----------
+      function bindEvents() {
+        // 数字按钮
+        for (let i = 0; i <= 9; i++) {
+          const btn = document.getElementById(`btn${i}`);
+          if (btn) {
+            btn.addEventListener('click', () => appendToExpression(i.toString()));
+          }
+        }
+
+        // 小数点
+        document.getElementById('btnDot')?.addEventListener('click', () => appendToExpression('.'));
+        
+        // 括号
+        document.getElementById('btnLeftParen')?.addEventListener('click', () => appendToExpression('('));
+        document.getElementById('btnRightParen')?.addEventListener('click', () => appendToExpression(')'));
+
+        // 运算符
+        document.getElementById('btnAdd')?.addEventListener('click', () => appendToExpression('+'));
+        document.getElementById('btnSubtract')?.addEventListener('click', () => appendToExpression('−')); // 使用显示减号
+        document.getElementById('btnMultiply')?.addEventListener('click', () => appendToExpression('×'));
+        document.getElementById('btnDivide')?.addEventListener('click', () => appendToExpression('÷'));
+        document.getElementById('btnPercent')?.addEventListener('click', () => appendToExpression('%'));
+
+        // 功能键
+        document.getElementById('btnClear')?.addEventListener('click', clearExpression);
+        document.getElementById('btnBackspace')?.addEventListener('click', backspace);
+        document.getElementById('btnEquals')?.addEventListener('click', performEquals);
+        
+        // 清除历史
+        clearHistoryBtn.addEventListener('click', clearHistory);
+
+        // 键盘支持（增强体验）
+        window.addEventListener('keydown', handleKeyboard);
+        
+        // 输入框只读，避免手动输入复杂内容，但保留焦点样式。也可以允许直接输入？为了统一体验保持只读。
+        // 但为了可访问性，保留按钮操作。
+      }
+
+      function handleKeyboard(e) {
+        const key = e.key;
+        // 防止在输入框外触发？全局监听
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+          // 如果焦点在真正的输入框上（我们的expressionInput是只读的，但可能其他输入），忽略
+          if (e.target === expressionInput) {
+            // 允许通过键盘操作只读输入框？我们直接处理。
+          } else {
+            return;
+          }
+        }
+        
+        // 数字键
+        if (key >= '0' && key <= '9') {
+          e.preventDefault();
+          appendToExpression(key);
+        } else if (key === '.') {
+          e.preventDefault();
+          appendToExpression('.');
+        } else if (key === '(') {
+          e.preventDefault();
+          appendToExpression('(');
+        } else if (key === ')') {
+          e.preventDefault();
+          appendToExpression(')');
+        } else if (key === '+') {
+          e.preventDefault();
+          appendToExpression('+');
+        } else if (key === '-') {
+          e.preventDefault();
+          appendToExpression('−');
+        } else if (key === '*') {
+          e.preventDefault();
+          appendToExpression('×');
+        } else if (key === '/') {
+          e.preventDefault();
+          appendToExpression('÷');
+        } else if (key === '%') {
+          e.preventDefault();
+          appendToExpression('%');
+        } else if (key === 'Enter' || key === '=') {
+          e.preventDefault();
+          performEquals();
+        } else if (key === 'Backspace') {
+          e.preventDefault();
+          backspace();
+        } else if (key === 'Delete' || key === 'Escape') {
+          e.preventDefault();
+          clearExpression();
+        }
+      }
+
+      // 初始化
+      function init() {
+        loadHistory();
+        updateDisplay();
+        bindEvents();
+        // 点击输入框时确保焦点（只读但可聚焦用于键盘监听）
+        expressionInput.addEventListener('click', () => expressionInput.focus());
+        // 初始聚焦
+        expressionInput.focus();
+      }
+
+      // 启动一切
+      init();
+    })();
+  </script>
+</body>
+</html>
